@@ -9,3 +9,5 @@ a combinatoric poem website generated from your cpu usage
 
 Example:
 
+![Screenshot 2024-03-27 at 22 08 27](https://github.com/deinon-daemon/cpu_poem/assets/144135195/2ae990b3-be8e-48df-b6b0-17b9dff76906)
+
