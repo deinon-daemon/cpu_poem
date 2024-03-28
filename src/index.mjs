@@ -28,8 +28,12 @@ function App(props) {
         </div>`
         
     })}
-        <button onclick=${handleSnapshot}>${paused}</button>
     </div>
+
+    <div style="position: fixed; display: inline-block; bottom: 25px; left: 25px;">
+        <button class="snapshot-btn" onclick=${handleSnapshot}>${paused}</button>
+    </div>
+    
     
 
   `;

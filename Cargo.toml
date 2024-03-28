@@ -12,3 +12,4 @@ tokio = { version = "1.25.0", features = ["full"] }
 tracing-subscriber = { version = "0.3.16", features = ["env-filter"] }
 serde = { version = "1.0.197", features = ["derive"] }
 time = "0.3.34"
+rand = "0.8.5"

@@ -56,3 +56,25 @@ body {
     position: relative;
 
 }
+
+
+.snapshot-btn {
+    padding: 10px 20px;
+    font-size: 16px;
+    font-weight: bold;
+    color: #fff;
+    background-color: #2A9D8F;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+.snapshot-btn:hover {
+    background-color: #264653;
+}
+
+.snapshot-btn:focus {
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(34, 220, 198, 0.5);
+}
