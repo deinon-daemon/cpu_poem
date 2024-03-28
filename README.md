@@ -1,5 +1,6 @@
 # cpu_poem
 a combinatoric poem website generated from your cpu usage
+(based on fasterthanlime's rust build for a htop-like cpu monitoring tool in browser)
 
 1. git clone
 2. cargo run
