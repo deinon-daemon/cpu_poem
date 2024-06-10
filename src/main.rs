@@ -1,3 +1,5 @@
+
+
 use axum::{
     extract::{
         ws::{Message, WebSocket},
@@ -13,11 +15,24 @@ use rand::Rng;
 use sysinfo::{CpuExt, System, SystemExt};
 use tokio::sync::broadcast;
 use serde::{Serialize, Deserialize};
+use lazy_static::lazy_static;
+use tokio::sync::RwLock;
+
+mod mamba;
+
+lazy_static! {
+    static ref MAMBA_MODEL: RwLock<mamba::TextGeneration> = RwLock::new(mamba::make_model().expect("Failed to initialize Mamba model"));
+}
 
 #[derive(Serialize, Deserialize, Clone)]
 struct Snapshot {
     cpus: Vec<f32>,
     sentences: Vec<String>
+}
+
+#[derive(Serialize, Deserialize, Clone)]
+struct LlmText {
+    text: String
 }
 
 const CIORAN_TEXT: &str = include_str!("cioran.txt");
@@ -43,11 +58,16 @@ fn extract_sentences(cpu_usage: &[f32], significant_figures: usize) -> Vec<Strin
         // Extract the sentence at the calculated index
         let mut sentence = sentences[index].to_string();
 
-        if sentence.len() < 3 {
+        while sentence.trim().len() < 3 {
             let mut rng = rand::thread_rng();
             let random_number = rng.gen_range(1..=10);
-            let new_index = index - random_number;
-            sentence = sentences[new_index].to_string();
+            let mut new_index = index.checked_sub(random_number as usize);
+            if let Some(idx) = new_index {
+                sentence = sentences[idx].to_string();
+            } else {
+                new_index = index.checked_add(random_number as usize);
+                sentence = sentences[new_index.unwrap()].to_string();
+            }
         }
         result.push(sentence);
     }
@@ -82,6 +102,7 @@ async fn main() {
         .route("/index.mjs", get(indexmjs_get))
         .route("/index.css", get(indexcss_get))
         .route("/realtime/cpus", get(realtime_cpus_get))
+        .route("/realtime/mamba", get(realtime_llm_get))
         .with_state(app_state.clone());
 
     // Update CPU usage in the background
@@ -105,7 +126,7 @@ async fn main() {
 
 #[derive(Clone)]
 struct AppState {
-    tx: broadcast::Sender<Snapshot>,
+    tx: broadcast::Sender<Snapshot>
 }
 
 #[axum::debug_handler]
@@ -143,6 +164,15 @@ async fn realtime_cpus_get(
     ws.on_upgrade(|ws: WebSocket| async { realtime_cpus_stream(state, ws).await })
 }
 
+
+#[axum::debug_handler]
+async fn realtime_llm_get(
+    ws: WebSocketUpgrade,
+    State(state): State<AppState>,
+) -> impl IntoResponse {
+    ws.on_upgrade(|ws: WebSocket| async { realtime_llm_stream(state, ws).await })
+}
+
 async fn realtime_cpus_stream(app_state: AppState, mut ws: WebSocket) {
     let mut rx = app_state.tx.subscribe();
 
@@ -155,4 +185,49 @@ async fn realtime_cpus_stream(app_state: AppState, mut ws: WebSocket) {
             eprintln!("null message");
         }
     }
+}
+
+async fn realtime_llm_stream(app_state: AppState, mut ws: WebSocket) {
+
+
+    // Read incoming messages from the client
+    while let Some(result) = ws.recv().await {
+        // match result {
+        //     Ok(message) => async {
+        //         let text = message.to_text().unwrap();
+        //         // Process the received text message
+        //         println!("Received message from client: {}", text);
+        //         let mut rx = app_state.tx.subscribe();
+        //
+        //         // Send a response back to the client
+        //         // let response = LlmText{ text: text.to_string() };
+        //
+        //         while let Some(result) = async {
+        //             match MAMBA_MODEL.read().await.run(&text.to_string(), 4000) {
+        //                 Ok(()) => {
+        //                     let generated_text = MAMBA_MODEL.read().await.get_generated_text();
+        //                     let response = LlmText { text: generated_text.to_string() };
+        //                     if let Ok(_) = ws.send(Message::Text(serde_json::to_string(&response).unwrap())).await {
+        //                         // Message sent successfully
+        //                         Some(())
+        //                     } else {
+        //                         // Message sending failed
+        //                         // Handle the error or take appropriate action
+        //                         eprintln!("null message");
+        //                         None
+        //                     }
+        //                 }
+        //                 Err(e) => {
+        //                     eprintln!("Error running the model: {}", e);
+        //                     None
+        //                 }
+        //             }
+        //         }.await {}
+        //     }
+        //     Err(e) => {
+        //         eprintln!("WebSocket error: {}", e);
+        //         break;
+        //     }
+        // }.await;
+    };
 }

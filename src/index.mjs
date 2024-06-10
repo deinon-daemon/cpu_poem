@@ -28,6 +28,7 @@ function App(props) {
         </div>`
         
     })}
+        <p>${(props.llm_text ?? "")}</p>
     </div>
 
     <div style="position: fixed; display: inline-block; bottom: 25px; left: 25px;">
@@ -61,7 +62,16 @@ function takeSnapshot() {
         sentences: [...document.querySelectorAll(".words p")].map((p) => p.textContent),
     };
     ws.close();
-    render(html`<${App} cpus=${snapshotData.cpus} sentences=${snapshotData.sentences} onSnapshot=${restoreWebSocket}></${App}>`, document.body);
+    let new_url = new URL("/realtime/mamba", window.location.href);
+    new_url.protocol = new_url.protocol.replace("http", "ws");
+    let new_ws = new WebSocket(new_url.href);
+    new_ws.onopen = () => new_ws.send(snapshotData.sentences.join(" \n"));
+    new_ws.onmessage = (ev) => {
+        let json = JSON.parse(ev.data);
+        render(html`<${App} cpus=${snapshotData.cpus} sentences=${snapshotData.sentences} llm_text=${json.text} onSnapshot=${restoreWebSocket}></${App}>`, document.body);
+
+    }
+    // render(html`<${App} cpus=${snapshotData.cpus} sentences=${snapshotData.sentences} onSnapshot=${restoreWebSocket}></${App}>`, document.body);
 }
 
 function restoreWebSocket() {

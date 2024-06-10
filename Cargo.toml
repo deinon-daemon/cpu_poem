@@ -13,3 +13,14 @@ tracing-subscriber = { version = "0.3.16", features = ["env-filter"] }
 serde = { version = "1.0.197", features = ["derive"] }
 time = "0.3.34"
 rand = "0.8.5"
+anyhow = "1.0.86"
+clap = { version = "4.5.7", features = ["derive"] }
+candle-core = "0.5.1"
+candle-examples = "0.5.1"
+candle-nn = "0.5.1"
+candle-transformers = "0.5.1"
+hf-hub = "0.3.2"
+tokenizers = "0.19.1"
+tracing-chrome = "0.7.2"
+lazy_static = "1.4.0"
+
